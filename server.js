@@ -51,7 +51,7 @@ app.get('/test-db', async (req, res) => {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
         user: process.env.DB_USER,
-        ssl: process.env.DB_SSL
+        ssl: !!process.env.DB_SSL
       }
     });
   } catch (error) {
@@ -63,10 +63,39 @@ app.get('/test-db', async (req, res) => {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
         user: process.env.DB_USER,
-        ssl: process.env.DB_SSL
+        ssl: !!process.env.DB_SSL
       }
     });
   }
+});
+
+// Network Test Route (Low Level)
+const net = require('net');
+app.get('/test-network', (req, res) => {
+  const host = process.env.DB_HOST;
+  const port = process.env.DB_PORT || 3306;
+
+  const socket = new net.Socket();
+  const start = Date.now();
+  
+  socket.setTimeout(5000); // 5s timeout
+
+  socket.on('connect', () => {
+    const duration = Date.now() - start;
+    res.json({ status: 'Success', message: `TCP Connection to ${host}:${port} successful in ${duration}ms` });
+    socket.destroy();
+  });
+
+  socket.on('timeout', () => {
+    res.status(500).json({ status: 'Error', message: `TCP Connection to ${host}:${port} timed out.` });
+    socket.destroy();
+  });
+
+  socket.on('error', (err) => {
+    res.status(500).json({ status: 'Error', message: `TCP Connection failed: ${err.message}` });
+  });
+
+  socket.connect(port, host);
 });
 
 // Routes
