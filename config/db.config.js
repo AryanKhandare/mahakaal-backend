@@ -8,10 +8,11 @@ module.exports = {
   port: process.env.DB_PORT || 3306,
   dialect: 'mysql',
   dialectOptions: {
-    ssl: (process.env.DB_SSL === 'true' || process.env.DB_SSL === true) ? {
+    ssl: (process.env.DB_SSL === 'true' || process.env.DB_SSL === true || (process.env.DB_HOST && process.env.DB_HOST.includes('rlwy.net'))) ? {
       require: true,
       rejectUnauthorized: false
-    } : undefined
+    } : undefined,
+    connectTimeout: 60000 // 60 seconds
   },
   pool: {
     max: 5,
