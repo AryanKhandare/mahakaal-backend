@@ -24,8 +24,13 @@ app.use((req, res, next) => {
 });
 
 // Database Sync
+console.log(`Attempting to connect to Database at ${process.env.DB_HOST}:${process.env.DB_PORT || 3306} as ${process.env.DB_USER}`);
+db.sequelize.authenticate()
+  .then(() => console.log('Database connection established successfully.'))
+  .catch(err => console.error('Unable to connect to the database:', err));
+
 db.sequelize.sync().then(() => {
-  console.log('Database connected and synced.');
+  console.log('Database synced.');
 }).catch((err) => {
   console.error('Failed to sync database: ' + err.message);
 });
@@ -35,12 +40,47 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Mahakaal Food Ordering System API.' });
 });
 
+// DB Test Route
+app.get('/test-db', async (req, res) => {
+  try {
+    await db.sequelize.authenticate();
+    res.json({ 
+      status: 'Success', 
+      message: 'Database connection established successfully.',
+      config: {
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        user: process.env.DB_USER,
+        ssl: process.env.DB_SSL
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'Error', 
+      message: 'Unable to connect to the database.', 
+      error: error.message,
+      config: {
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        user: process.env.DB_USER,
+        ssl: process.env.DB_SSL
+      }
+    });
+  }
+});
+
 // Routes
 require('./routes/auth.routes')(app);
 require('./routes/user.routes')(app);
 require('./routes/food.routes')(app);
 require('./routes/order.routes')(app);
 require('./routes/kitchen.routes')(app);
+
+// 404 Handler for debugging
+app.use((req, res, next) => {
+  console.log(`[404] Route not found: ${req.method} ${req.url}`);
+  res.status(404).send({ message: `Route not found: ${req.method} ${req.url}` });
+});
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {

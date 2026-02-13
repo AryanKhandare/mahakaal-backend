@@ -8,7 +8,7 @@ module.exports = {
   port: process.env.DB_PORT || 3306,
   dialect: 'mysql',
   dialectOptions: {
-    ssl: process.env.DB_SSL === 'true' ? {
+    ssl: (process.env.DB_SSL === 'true' || process.env.DB_SSL === true) ? {
       require: true,
       rejectUnauthorized: false
     } : undefined
