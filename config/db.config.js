@@ -12,7 +12,8 @@ module.exports = {
       require: true,
       rejectUnauthorized: false
     } : undefined,
-    connectTimeout: 60000 // 60 seconds
+    connectTimeout: 60000, // 60 seconds
+    family: 4 // Force IPv4
   },
   pool: {
     max: 5,

@@ -95,7 +95,7 @@ app.get('/test-network', (req, res) => {
     res.status(500).json({ status: 'Error', message: `TCP Connection failed: ${err.message}` });
   });
 
-  socket.connect(port, host);
+  socket.connect({ port: parseInt(port), host: host, family: 4 });
 });
 
 // Routes
