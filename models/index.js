@@ -27,6 +27,41 @@ db.order = require("./order.model.js")(sequelize, Sequelize);
 db.orderItem = require("./orderItem.model.js")(sequelize, Sequelize);
 db.address = require("./address.model.js")(sequelize, Sequelize);
 
-/* associations remain same */
+// Associations
+
+// Category <-> Food
+db.category.hasMany(db.food, { as: "foods" });
+db.food.belongsTo(db.category, {
+  foreignKey: "categoryId",
+  as: "category",
+});
+
+// User <-> Order
+db.user.hasMany(db.order, { as: "orders" });
+db.order.belongsTo(db.user, {
+  foreignKey: "userId",
+  as: "user",
+});
+
+// User <-> Address
+db.user.hasMany(db.address, { as: "addresses" });
+db.address.belongsTo(db.user, {
+  foreignKey: "userId",
+  as: "user",
+});
+
+// Order <-> OrderItem
+db.order.hasMany(db.orderItem, { as: "items" });
+db.orderItem.belongsTo(db.order, {
+  foreignKey: "orderId",
+  as: "order",
+});
+
+// Food <-> OrderItem
+db.food.hasMany(db.orderItem, { as: "orderItems" });
+db.orderItem.belongsTo(db.food, {
+  foreignKey: "foodId",
+  as: "food",
+});
 
 module.exports = db;
