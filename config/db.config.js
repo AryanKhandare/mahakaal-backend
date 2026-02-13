@@ -13,7 +13,8 @@ module.exports = {
       require: true,
       rejectUnauthorized: false
     },
-    connectTimeout: 60000
+    connectTimeout: 60000,
+    family: 4 // Force IPv4
   },
 
   pool: {

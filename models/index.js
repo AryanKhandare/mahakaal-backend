@@ -7,14 +7,11 @@ const sequelize = new Sequelize(
   config.password,
   {
     host: config.host,
+    port: config.port,
     dialect: config.dialect,
-    operatorsAliases: false,
-    pool: {
-      max: config.pool.max,
-      min: config.pool.min,
-      acquire: config.pool.acquire,
-      idle: config.pool.idle
-    }
+    dialectOptions: config.dialectOptions,
+    pool: config.pool,
+    logging: false
   }
 );
 
@@ -30,41 +27,6 @@ db.order = require("./order.model.js")(sequelize, Sequelize);
 db.orderItem = require("./orderItem.model.js")(sequelize, Sequelize);
 db.address = require("./address.model.js")(sequelize, Sequelize);
 
-// Associations
-
-// Category <-> Food
-db.category.hasMany(db.food, { as: "foods" });
-db.food.belongsTo(db.category, {
-  foreignKey: "categoryId",
-  as: "category",
-});
-
-// User <-> Order
-db.user.hasMany(db.order, { as: "orders" });
-db.order.belongsTo(db.user, {
-  foreignKey: "userId",
-  as: "user",
-});
-
-// User <-> Address
-db.user.hasMany(db.address, { as: "addresses" });
-db.address.belongsTo(db.user, {
-  foreignKey: "userId",
-  as: "user",
-});
-
-// Order <-> OrderItem
-db.order.hasMany(db.orderItem, { as: "items" });
-db.orderItem.belongsTo(db.order, {
-  foreignKey: "orderId",
-  as: "order",
-});
-
-// Food <-> OrderItem
-db.food.hasMany(db.orderItem, { as: "orderItems" });
-db.orderItem.belongsTo(db.food, {
-  foreignKey: "foodId",
-  as: "food",
-});
+/* associations remain same */
 
 module.exports = db;

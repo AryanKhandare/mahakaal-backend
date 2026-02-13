@@ -75,27 +75,50 @@ app.get('/test-network', (req, res) => {
   const host = process.env.DB_HOST;
   const port = process.env.DB_PORT || 3306;
 
-  const socket = new net.Socket();
-  const start = Date.now();
+  const dns = require('dns');
+  dns.lookup(host, (err, address, family) => {
+    if (err) {
+       return res.status(500).json({ status: 'Error', message: `DNS Lookup failed: ${err.message}` });
+    }
+    
+    console.log(`Resolved ${host} to ${address} (IPv${family})`);
+
+    const socket = new net.Socket();
+    const start = Date.now();
+    
+    socket.setTimeout(5000); // 5s timeout
   
-  socket.setTimeout(5000); // 5s timeout
-
-  socket.on('connect', () => {
-    const duration = Date.now() - start;
-    res.json({ status: 'Success', message: `TCP Connection to ${host}:${port} successful in ${duration}ms` });
-    socket.destroy();
+    socket.on('connect', () => {
+      const duration = Date.now() - start;
+      res.json({ 
+          status: 'Success', 
+          message: `TCP Connection to ${host}:${port} successful in ${duration}ms`,
+          dns: { address, family }
+      });
+      socket.destroy();
+    });
+  
+    socket.on('timeout', () => {
+      res.status(500).json({ 
+          status: 'Error', 
+          message: `TCP Connection to ${host}:${port} timed out.`,
+          dns: { address, family }
+      });
+      socket.destroy();
+    });
+  
+    socket.on('error', (err) => {
+      res.status(500).json({ 
+          status: 'Error', 
+          message: `TCP Connection failed: ${err.message}`,
+          dns: { address, family }
+       });
+    });
+  
+    // socket.connect({ port: parseInt(port), host: host, family: 4 });
+    // Use the resolved IP directly to be 100% sure
+    socket.connect({ port: parseInt(port), host: address }); 
   });
-
-  socket.on('timeout', () => {
-    res.status(500).json({ status: 'Error', message: `TCP Connection to ${host}:${port} timed out.` });
-    socket.destroy();
-  });
-
-  socket.on('error', (err) => {
-    res.status(500).json({ status: 'Error', message: `TCP Connection failed: ${err.message}` });
-  });
-
-  socket.connect({ port: parseInt(port), host: host, family: 4 });
 });
 
 // Routes
