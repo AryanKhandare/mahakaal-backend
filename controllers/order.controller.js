@@ -5,7 +5,7 @@ const User = db.user;
 const Food = db.food;
 
 // Create and Save a new Order
-exports.createOrder = (req, res) => {
+exports.createOrder = async (req, res) => {
   const { items, totalAmount, paymentMethod, address } = req.body;
 
   if (!items || items.length === 0) {
@@ -13,33 +13,50 @@ exports.createOrder = (req, res) => {
     return;
   }
 
-  Order.create({
-    userId: req.userId,
-    totalAmount: totalAmount,
-    paymentMethod: paymentMethod,
-    deliveryAddress: JSON.stringify(address), // Store address as JSON string for simplicity
-    status: 'new'
-  })
-    .then(order => {
-      // Create Order Items
-      const orderItems = items.map(item => ({
-        orderId: order.id,
-        foodId: item.foodId,
-        quantity: item.quantity,
-        price: item.price
-      }));
-
-      OrderItem.bulkCreate(orderItems)
-        .then(() => {
-          res.send({ message: "Order placed successfully!", orderId: order.id });
-        })
-        .catch(err => {
-          res.status(500).send({ message: err.message });
-        });
-    })
-    .catch(err => {
-      res.status(500).send({ message: err.message });
+  try {
+    // 1. Validate that all Food IDs exist
+    const foodIds = items.map(item => item.foodId);
+    const foundFoods = await Food.findAll({
+      where: {
+        id: foodIds
+      }
     });
+
+    if (foundFoods.length !== foodIds.length) {
+      // Find which IDs are missing
+      const foundIds = foundFoods.map(f => f.id);
+      const missingIds = foodIds.filter(id => !foundIds.includes(id));
+      
+      return res.status(400).send({ 
+        message: `Some items in your cart are no longer available (Food IDs: ${missingIds.join(', ')}). Please clear your cart and re-add items.` 
+      });
+    }
+
+    // 2. Create Order
+    const order = await Order.create({
+      userId: req.userId,
+      totalAmount: totalAmount,
+      paymentMethod: paymentMethod,
+      deliveryAddress: JSON.stringify(address), 
+      status: 'new'
+    });
+
+    // 3. Create Order Items
+    const orderItems = items.map(item => ({
+      orderId: order.id,
+      foodId: item.foodId,
+      quantity: item.quantity,
+      price: item.price
+    }));
+
+    await OrderItem.bulkCreate(orderItems);
+    
+    res.send({ message: "Order placed successfully!", orderId: order.id });
+
+  } catch (err) {
+    console.error("Order Creation Error:", err);
+    res.status(500).send({ message: err.message });
+  }
 };
 
 // Retrieve all Orders for a User
