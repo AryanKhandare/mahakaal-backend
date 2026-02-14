@@ -135,47 +135,67 @@ app.get('/seed', async (req, res) => {
     const Category = db.category;
     const Food = db.food;
 
-    // Check if data already exists to avoid duplicates
+    // Check force flag
+    const forceUpdate = req.query.force === 'true';
+
+    // Check if data exists
     const existingCategories = await Category.count();
-    if (existingCategories > 0) {
-       return res.send({ message: "Database already seeded!" });
+    if (existingCategories > 0 && !forceUpdate) {
+       return res.send({ message: "Database already seeded! Use /seed?force=true to overwrite." });
     }
 
-    // Create Categories
-    const starters = await Category.create({
-      name: "Starters",
-      image: "https://images.unsplash.com/photo-1541529086526-db283c563270?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80",
-      description: "Appetizers to start your meal"
-    });
+    if (forceUpdate) {
+        // Clear existing data
+        await Food.destroy({ where: {}, truncate: false }); // dependent on category
+        await Category.destroy({ where: {}, truncate: false });
+    }
 
-    const mainCourse = await Category.create({
-      name: "Main Course",
-      image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80",
-      description: "Hearty meals for the soul"
-    });
+    // --- Categories using reliable Icons8 URLs ---
+    const categoriesData = [
+      { name: "Pizza", image: "https://img.icons8.com/color/96/000000/pizza.png", description: "Cheesy Italian delights" },
+      { name: "Burger", image: "https://img.icons8.com/color/96/000000/hamburger.png", description: "Juicy stacked burgers" },
+      { name: "Thali", image: "https://img.icons8.com/color/96/000000/thali.png", description: "Complete wholesome meals" },
+      { name: "South Indian", image: "https://img.icons8.com/color/96/000000/dosa.png", description: "Dosa, Idli & more" },
+      { name: "Chinese", image: "https://img.icons8.com/color/96/000000/noodles.png", description: "Noodles and Manchurian" },
+      { name: "Dessert", image: "https://img.icons8.com/color/96/000000/pancake.png", description: "Sweet treats" },
+      { name: "Beverages", image: "https://img.icons8.com/color/96/000000/soda-bottle.png", description: "Refreshing drinks" }
+    ];
 
-    // Create Foods
-    await Food.create({
-      name: "Paneer Tikka",
-      price: 249,
-      description: "Marinated paneer grilled to perfection",
-      isVeg: true,
-      categoryId: starters.id,
-      image: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80",
-      isPopular: true
-    });
+    const createdCategories = {};
+    for (const cat of categoriesData) {
+      createdCategories[cat.name] = await Category.create(cat);
+    }
 
-    await Food.create({
-      name: "Mahakaal Biryani",
-      price: 399,
-      description: "Signature biryani with divine spices",
-      isVeg: true,
-      categoryId: mainCourse.id,
-      image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80",
-      isPopular: true
-    });
+    // --- Foods ---
+    const foodsData = [
+      // Pizza
+      { name: "Margherita Pizza", price: 199, description: "Classic cheese pizza with fresh basil", isVeg: true, categoryId: createdCategories["Pizza"].id, image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80", isPopular: true },
+      { name: "Farmhouse Pizza", price: 299, description: "Loaded with fresh veggies and cheese", isVeg: true, categoryId: createdCategories["Pizza"].id, image: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80", isPopular: false },
+      
+      // Burger
+      { name: "Aloo Tikki Burger", price: 99, description: "Crispy potato patty with special sauces", isVeg: true, categoryId: createdCategories["Burger"].id, image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80", isPopular: true },
+      
+      // Thali
+      { name: "Royal Thali", price: 349, description: "Dal, Paneer, Mixed Veg, Rice, Roti, Salad, Sweet", isVeg: true, categoryId: createdCategories["Thali"].id, image: "https://images.unsplash.com/photo-1585937421612-70a008356f36?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80", isPopular: true },
+      
+      // South Indian
+      { name: "Masala Dosa", price: 149, description: "Crispy rice crepe filled with spiced potato", isVeg: true, categoryId: createdCategories["South Indian"].id, image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80", isPopular: true },
 
-    res.send({ message: "Database seeded successfully!" });
+      // Chinese
+      { name: "Hakka Noodles", price: 179, description: "Wok-tossed noodles with crunchy vegetables", isVeg: true, categoryId: createdCategories["Chinese"].id, image: "https://images.unsplash.com/photo-1585032226651-759b368d7246?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80", isPopular: true },
+      
+      // Dessert
+      { name: "Gulab Jamun", price: 49, description: "Soft dough balls dipped in sugar syrup", isVeg: true, categoryId: createdCategories["Dessert"].id, image: "https://images.unsplash.com/photo-1589119908995-c6837fa14848?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80", isPopular: true },
+      
+      // Beverages
+      { name: "Mango Lassi", price: 79, description: "Thick and creamy yogurt drink with mango", isVeg: true, categoryId: createdCategories["Beverages"].id, image: "https://images.unsplash.com/photo-1543362140-5b651082c3c5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80", isPopular: false }
+    ];
+
+    for (const food of foodsData) {
+      await Food.create(food);
+    }
+
+    res.send({ message: "Database re-seeded successfully with corrected icons!" });
   } catch (error) {
     res.status(500).send({ message: "Seeding failed: " + error.message });
   }
