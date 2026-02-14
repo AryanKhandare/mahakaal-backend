@@ -135,6 +135,52 @@ app.use((req, res, next) => {
   res.status(404).send({ message: `Route not found: ${req.method} ${req.url}` });
 });
 
+// Seeding Route
+app.get('/seed', async (req, res) => {
+  try {
+    const Category = db.category;
+    const Food = db.food;
+
+    // Create Categories
+    const starters = await Category.create({
+      name: "Starters",
+      image: "https://images.unsplash.com/photo-1541529086526-db283c563270?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80",
+      description: "Appetizers to start your meal"
+    });
+
+    const mainCourse = await Category.create({
+      name: "Main Course",
+      image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80",
+      description: "Hearty meals for the soul"
+    });
+
+    // Create Foods
+    await Food.create({
+      name: "Paneer Tikka",
+      price: 249,
+      description: "Marinated paneer grilled to perfection",
+      isVeg: true,
+      categoryId: starters.id,
+      image: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80",
+      isPopular: true
+    });
+
+    await Food.create({
+      name: "Mahakaal Biryani",
+      price: 399,
+      description: "Signature biryani with divine spices",
+      isVeg: true,
+      categoryId: mainCourse.id,
+      image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80",
+      isPopular: true
+    });
+
+    res.send({ message: "Database seeded successfully!" });
+  } catch (error) {
+    res.status(500).send({ message: "Seeding failed: " + error.message });
+  }
+});
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}.`);
