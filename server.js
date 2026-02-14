@@ -129,17 +129,17 @@ require('./routes/food.routes')(app);
 require('./routes/order.routes')(app);
 require('./routes/kitchen.routes')(app);
 
-// 404 Handler for debugging
-app.use((req, res, next) => {
-  console.log(`[404] Route not found: ${req.method} ${req.url}`);
-  res.status(404).send({ message: `Route not found: ${req.method} ${req.url}` });
-});
-
 // Seeding Route
 app.get('/seed', async (req, res) => {
   try {
     const Category = db.category;
     const Food = db.food;
+
+    // Check if data already exists to avoid duplicates
+    const existingCategories = await Category.count();
+    if (existingCategories > 0) {
+       return res.send({ message: "Database already seeded!" });
+    }
 
     // Create Categories
     const starters = await Category.create({
@@ -180,6 +180,16 @@ app.get('/seed', async (req, res) => {
     res.status(500).send({ message: "Seeding failed: " + error.message });
   }
 });
+
+// 404 Handler for debugging
+app.use((req, res, next) => {
+  console.log(`[404] Route not found: ${req.method} ${req.url}`);
+  res.status(404).send({ message: `Route not found: ${req.method} ${req.url}` });
+});
+
+// Seeding Route moved above 404 handler
+
+
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
