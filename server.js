@@ -29,8 +29,9 @@ db.sequelize.authenticate()
   .then(() => console.log('Database connection established successfully.'))
   .catch(err => console.error('Unable to connect to the database:', err));
 
-db.sequelize.sync().then(() => {
-  console.log('Database synced.');
+// Sync Database (Alter = true updates tables if schema changes)
+db.sequelize.sync({ alter: true }).then(() => {
+  console.log('Database synced with alter: true.');
 }).catch((err) => {
   console.error('Failed to sync database: ' + err.message);
 });
