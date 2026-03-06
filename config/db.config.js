@@ -14,7 +14,7 @@ module.exports = {
       rejectUnauthorized: false
     },
     connectTimeout: 60000,
-    family: 4 // Force IPv4
+    keepAlive: true
   },
 
   pool: {
