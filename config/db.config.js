@@ -13,15 +13,20 @@ module.exports = {
       require: true,
       rejectUnauthorized: false
     },
-    connectTimeout: 60000,
-    keepAlive: true
+    connectTimeout: 60000
   },
 
   pool: {
     max: 5,
     min: 0,
     acquire: 60000,
-    idle: 10000
+    idle: 10000,
+    evict: 10000
+  },
+
+  retry: {
+    match: [/Deadlock/i, 'PROTOCOL_CONNECTION_LOST', 'ECONNRESET'],
+    max: 3
   },
 
   logging: false
